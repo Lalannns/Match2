@@ -17,91 +17,75 @@ class ViewController: UIViewController {
     
     var isActive = false
     
-        override func viewDidLoad() {
+    override func viewDidLoad() {
         super.viewDidLoad()
         startGameTimer()
     }
     var gameTimer: Timer?
     var secondsElapsed = 0
     @IBOutlet weak var timerLabel: UILabel!
-   
+    
     
     @objc func updateTimer() {
         secondsElapsed += 1
         timerLabel.text = "Time: \(secondsElapsed)s"
     }
-      
+    
     func startGameTimer() {
         gameTimer?.invalidate() // stop previous timer if any
         gameTimer = Timer.scheduledTimer(timeInterval: 1.0, target: self, selector: #selector(updateTimer), userInfo: nil, repeats: true)
     }
-   
-
-
+    
+    var firstFlippedIndex: Int?
+    
+    
     
     @IBAction func game(_ sender: UIButton) {
-        print(sender.tag)
+        let index = sender.tag - 1
         
-        if state[sender.tag - 1] != 0 || isActive {
+        if state[index] != 0 || isActive {
             return
         }
         
-        sender.setBackgroundImage(UIImage(named: images[sender.tag - 1]), for: .normal)
-        
+        sender.setBackgroundImage(UIImage(named: images[index]), for: .normal)
         sender.backgroundColor = UIColor.clear
+        state[index] = 1
         
-        state[sender.tag - 1] = 1
-        
-        var count = 0
-        
-        for item in state {
-            if item == 1 {
-                count += 1
-            }
-        }
-        if count == 2 {
+        if firstFlippedIndex == nil {
+            // First card flipped
+            firstFlippedIndex = index
+        } else {
+            // Second card flipped
             isActive = true
-            for WinArray in WinState {
-            if state[WinArray[0]] == state[WinArray[1]]&&state[WinArray[1]] == 1{
-                    state[WinArray[0]] == 2
-                    state[WinArray[1]] == 2
-                isActive = false 
+            let secondFlippedIndex = index
+            
+            if images[firstFlippedIndex!] == images[secondFlippedIndex] {
+                // Match found
+                state[firstFlippedIndex!] = 2
+                state[secondFlippedIndex] = 2
+                isActive = false
+                firstFlippedIndex = nil
+            } else {
+                // No match – flip back after delay
+                Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { _ in
+                    self.state[self.firstFlippedIndex!] = 0
+                    self.state[secondFlippedIndex] = 0
+                    
+                    if let button1 = self.view.viewWithTag(self.firstFlippedIndex! + 1) as? UIButton {
+                        button1.setBackgroundImage(nil, for: .normal)
+                        button1.backgroundColor = UIColor.systemBlue
+                    }
+                    
+                    if let button2 = self.view.viewWithTag(secondFlippedIndex + 1) as? UIButton {
+                        button2.setBackgroundImage(nil, for: .normal)
+                        button2.backgroundColor = UIColor.systemBlue
+                    }
+                    
+                    self.isActive = false
+                    self.firstFlippedIndex = nil
                 }
             }
-            if isActive {
-                Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(clear), userInfo: nil, repeats: false)
-            }
         }
     }
-    
-    @IBAction func resetButton(_ sender: UIButton) {
-        state = [Int](repeating: 0, count: 16)
-        images.shuffle()
-        for i in 1...16 {
-            if let button = view.viewWithTag(i) as? UIButton {
-                button.setBackgroundImage(nil, for: .normal)
-                button.backgroundColor = UIColor.systemBlue
-            }
-        }
-        isActive = false
-        secondsElapsed = 0
-        timerLabel.text = "Time: 0s"
-        startGameTimer()
-    }
-    
-  
-   @objc func clear(){
-       for i in 0..<16 {
-           if state[i] == 1 {
-        state[i] = 0
-    if let button = view.viewWithTag(i + 1) as? UIButton {
-        button.setBackgroundImage(nil, for: .normal)
-        button.backgroundColor = UIColor.systemBlue
-    }
-        }
-            }
-           isActive = false
-       }
-
 }
 
