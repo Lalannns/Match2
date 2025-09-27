@@ -98,6 +98,9 @@ class ViewController: UIViewController {
                     
                     self.isActive = false
                     self.firstFlippedIndex = nil
+                    
+                    
+                    
                 }
             }
         }
